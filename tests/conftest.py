@@ -1,6 +1,8 @@
 """Shared test fixtures for SerpHarvest tests."""
 
 
+import os
+
 import pytest
 
 
@@ -76,6 +78,10 @@ async def page():
     from playwright.async_api import async_playwright
 
     async with async_playwright() as p:
+        if not os.path.exists(p.firefox.executable_path):
+            # The pip package does not include browsers; CI runs `playwright install firefox`.
+            # Without it these tests would ERROR with a banner; say what to run instead.
+            pytest.skip("Firefox for Playwright is not installed: run `playwright install firefox`")
         browser = await p.firefox.launch(headless=True)
         context = await browser.new_context()
         page = await context.new_page()
