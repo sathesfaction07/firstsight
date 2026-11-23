@@ -1,4 +1,4 @@
-"""Configuration settings for SerpHarvest."""
+"""Configuration settings for Firstsight."""
 
 import os
 from typing import Literal

@@ -15,7 +15,7 @@ Use **`asyncio.Semaphore(max_concurrent)`** to limit concurrent page scraping.
 
 ## Rationale
 - **Controlled concurrency**: Semaphore enforces max N tasks executing simultaneously
-- **House pattern**: `asyncio.gather() + Semaphore` is the standard from adaptive-fetch
+- **House pattern**: `asyncio.gather() + Semaphore` is the standard from ballast
 - **Backpressure**: Tasks queue when semaphore is full, preventing runaway resource usage
 
 ## Consequences

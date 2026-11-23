@@ -1,4 +1,4 @@
-"""Shared test fixtures for SerpHarvest tests."""
+"""Shared test fixtures for Firstsight tests."""
 
 
 import os

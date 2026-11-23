@@ -1,4 +1,4 @@
-# SerpHarvest
+# Firstsight
 
 A Playwright-driven search results harvester with checkpoint recovery and concurrent page scraping. Extracts product listings across multiple keywords, regions, and sort orders, with idempotent DynamoDB storage that preserves first-sighting semantics — re-scraping the same query days later neither duplicates rows nor overwrites original timestamps.
 
@@ -48,7 +48,7 @@ Manual coordination of browser contexts, checkpoints, and database deduplication
 
 When tracking product rankings over time, the first-sighting date is immutable business data — it tells you when a product *first appeared* in search results for a given keyword in a given region. Upsert semantics destroy this: re-harvesting the same query five days later to catch newly-listed products would overwrite all existing rows with new timestamps, losing the original sighting dates.
 
-SerpHarvest solves this with a two-level deduplication strategy:
+Firstsight solves this with a two-level deduplication strategy:
 
 **Within a run:** An in-memory `seen` set prevents processing the same (region, keyword, product_id) tuple twice. If product P-123 appears on page 1 and page 3 for "laptop" in US, it gets written once and the second occurrence is filtered out before any database call. This avoids wasting API quota on redundant conditional writes.
 
@@ -114,7 +114,7 @@ The business value: you can track "laptop" in US every Monday for six months, an
 ## Project Structure
 
 ```
-serp-harvest/
+firstsight/
 ├── src/serp_harvest/
 │   ├── __init__.py           # Package version
 │   ├── config.py             # Pydantic Settings (env vars, postcodes map)
@@ -158,10 +158,10 @@ bash setup.sh                # Install deps, verify imports, run tests
 
 source .venv/bin/activate
 
-serp-harvest probe           # Test Playwright browser launch
-serp-harvest plan data/sample_keywords.csv --max-pages 3
-serp-harvest run data/sample_keywords.csv --max-pages 3 --sink local
-serp-harvest run data/sample_keywords.csv --sink dynamodb --no-resume
+firstsight probe           # Test Playwright browser launch
+firstsight plan data/sample_keywords.csv --max-pages 3
+firstsight run data/sample_keywords.csv --max-pages 3 --sink local
+firstsight run data/sample_keywords.csv --sink dynamodb --no-resume
 ```
 
 ---
@@ -232,7 +232,7 @@ Key settings in `config.py`:
 
 **Per-region delivery flows (23 regions, 4 flow types):**
 
-The original tool had a 640-line `setup_country()` function with nested conditionals for each region's delivery-address workflow. SerpHarvest replaces this with a data-driven architecture:
+The original tool had a 640-line `setup_country()` function with nested conditionals for each region's delivery-address workflow. Firstsight replaces this with a data-driven architecture:
 
 - **`REGION_FLOWS` dictionary**: Maps each of 23 region codes to a `RegionFlowConfig` defining its flow type, split position (for CA/JP/PL/SE/BR), city mappings (for SA/EG/ZA/AE), and behavioral flags (cookie consent for 9 EU regions, dismiss notifications for 6).
 - **`PostcodeFlowType` enum**: Four categories — single-field, split-two-part, city-dropdown, city-text-input.
@@ -275,7 +275,7 @@ This is the project's headline engineering feature — idempotent harvesting whe
 
 **Why browser contexts instead of tabs?** The original juggled `window_handles` and `switch_to.window()` to open one search page per region. Contexts isolate cookies and delivery postcode state cleanly while sharing the browser process. Tradeoff: slightly more memory (one context per region) vs. risk of state leakage across tabs. I went with contexts because the isolation is explicit and the memory cost is trivial (< 50MB per context).
 
-**Why asyncio.gather + Semaphore instead of sequential?** The original scraped one page at a time. For 100 keywords × 3 pages × 5 regions = 1,500 pages @ 5s each, that's over two hours. `Semaphore(8)` brings it to ~15-20 minutes with controlled resource usage. This is the house standard concurrency pattern (from `adaptive-fetch` and the portfolio style guide). The semaphore prevents overwhelming rate limits or drowning in tabs.
+**Why asyncio.gather + Semaphore instead of sequential?** The original scraped one page at a time. For 100 keywords × 3 pages × 5 regions = 1,500 pages @ 5s each, that's over two hours. `Semaphore(8)` brings it to ~15-20 minutes with controlled resource usage. This is the house standard concurrency pattern (from `ballast` and the portfolio style guide). The semaphore prevents overwhelming rate limits or drowning in tabs.
 
 **Why checkpoint by composite key instead of page number?** Page offsets break when the target site adds or removes products between runs. Identity-based resume (`REGION#keyword#PRODUCT_ID`) is stable: if a product was harvested, skip it; if it's new, fetch it. Tradeoff: checkpoint files grow (~1MB for 100k products) but deterministic resume is worth it. A page-offset approach would be smaller but fragile.
 
@@ -300,4 +300,4 @@ This is the project's headline engineering feature — idempotent harvesting whe
 
 ---
 
-Built following house style from `adaptive-fetch`. See `ARCHITECTURE.md` for detailed component design and `docs/adr/` for architectural decisions.
+Built following house style from `ballast`. See `ARCHITECTURE.md` for detailed component design and `docs/adr/` for architectural decisions.

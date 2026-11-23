@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== SerpHarvest Setup Script ==="
+echo "=== Firstsight Setup Script ==="
 echo
 
 OS_TYPE=$(uname -s)
@@ -132,7 +132,7 @@ echo "=== Setup Complete ==="
 echo
 echo "Usage:"
 echo "  source .venv/bin/activate"
-echo "  serp-harvest probe                         # Test browser launch"
-echo "  serp-harvest plan data/sample_keywords.csv # Estimate harvest"
-echo "  serp-harvest run data/sample_keywords.csv  # Run harvest"
+echo "  firstsight probe                         # Test browser launch"
+echo "  firstsight plan data/sample_keywords.csv # Estimate harvest"
+echo "  firstsight run data/sample_keywords.csv  # Run harvest"
 echo

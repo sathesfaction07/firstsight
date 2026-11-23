@@ -1,12 +1,12 @@
-# SerpHarvest — Technical Architecture
+# Firstsight — Technical Architecture
 
 ## Overview
 
-SerpHarvest is a concurrent Playwright-driven search results harvester with checkpoint recovery and idempotent DynamoDB storage. It orchestrates N concurrent browser tasks under a semaphore, extracts product IDs from paginated search results, and writes to local CSV or DynamoDB with first-sighting-wins semantics.
+Firstsight is a concurrent Playwright-driven search results harvester with checkpoint recovery and idempotent DynamoDB storage. It orchestrates N concurrent browser tasks under a semaphore, extracts product IDs from paginated search results, and writes to local CSV or DynamoDB with first-sighting-wins semantics.
 
 **Design principle:** Idempotence means preserving first-sighting metadata, not overwriting with latest data. The composite partition key `REGION#keyword#PRODUCT_ID` with DynamoDB conditional writes ensures re-harvesting the same query weeks later adds new products but never overwrites the original timestamp/run_id of existing products.
 
-**Headline engineering feature:** Cross-run deduplication that preserves first-sighting timestamps. When tracking product rankings over time, you need to know when each product *first appeared* in results for a given keyword, not the most recent harvest date. SerpHarvest's two-level dedup (in-memory `seen` set within a run + DynamoDB conditional write across runs) ensures re-harvesting "laptop" in US every Monday for six months produces a dataset where every row shows the original sighting date, enabling time-to-discovery and seasonality analysis that upsert semantics would destroy.
+**Headline engineering feature:** Cross-run deduplication that preserves first-sighting timestamps. When tracking product rankings over time, you need to know when each product *first appeared* in results for a given keyword, not the most recent harvest date. Firstsight's two-level dedup (in-memory `seen` set within a run + DynamoDB conditional write across runs) ensures re-harvesting "laptop" in US every Monday for six months produces a dataset where every row shows the original sighting date, enabling time-to-discovery and seasonality analysis that upsert semantics would destroy.
 
 ---
 
@@ -14,7 +14,7 @@ SerpHarvest is a concurrent Playwright-driven search results harvester with chec
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                        CLI (serp-harvest)                          │
+│                        CLI (firstsight)                          │
 │                                                                  │
 │  ┌──────────────┐   ┌──────────────────┐   ┌────────────────┐  │
 │  │   run        │   │   probe          │   │   plan         │  │
@@ -317,7 +317,7 @@ Alternative designs considered:
 
 1. **Sequential (no concurrency):** Original Selenium approach. Simple but 5-10x slower.
 2. **Unbounded asyncio.gather():** Fastest but overwhelms targets and consumes excessive resources.
-3. **asyncio.Semaphore (chosen):** Bounded concurrency with tunability. House standard pattern (from adaptive-fetch).
+3. **asyncio.Semaphore (chosen):** Bounded concurrency with tunability. House standard pattern (from ballast).
 
 Semaphore(8) is the default, tunable via `SH_MAX_CONCURRENT`. Higher values increase speed but risk rate-limiting. Lower values reduce resource usage but take longer.
 
@@ -383,16 +383,16 @@ bash setup.sh                # Install deps, verify, run tests
 source .venv/bin/activate
 
 # Test browser launch
-serp-harvest probe
+firstsight probe
 
 # Estimate workload
-serp-harvest plan data/sample_keywords.csv --max-pages 3
+firstsight plan data/sample_keywords.csv --max-pages 3
 
 # Run harvest
-serp-harvest run data/sample_keywords.csv --max-pages 3 --sink local
+firstsight run data/sample_keywords.csv --max-pages 3 --sink local
 
 # Run with DynamoDB (requires credentials)
-serp-harvest run data/sample_keywords.csv --sink dynamodb --no-resume
+firstsight run data/sample_keywords.csv --sink dynamodb --no-resume
 ```
 
 ---
@@ -418,4 +418,4 @@ pytest --cov=serp_harvest    # With coverage
 
 ---
 
-Built following house style from `adaptive-fetch`. See `docs/adr/` for architectural decision records and `README.md` for usage guide.
+Built following house style from `ballast`. See `docs/adr/` for architectural decision records and `README.md` for usage guide.

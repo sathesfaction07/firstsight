@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "serp-harvest"
+name = "firstsight"
 version = "1.0.0"
 description = "Playwright-driven search results harvester with checkpoint recovery and concurrent page scraping"
 readme = "README.md"
@@ -27,7 +27,7 @@ dev = [
 ]
 
 [project.scripts]
-serp-harvest = "serp_harvest.cli:main"
+firstsight = "serp_harvest.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/serp_harvest"]

@@ -1,4 +1,4 @@
-"""Command-line interface for SerpHarvest."""
+"""Command-line interface for Firstsight."""
 
 import asyncio
 import logging
@@ -25,7 +25,7 @@ def setup_logging(level: str = "INFO"):
 
 @click.group()
 def main():
-    """SerpHarvest: Playwright-driven search results harvester."""
+    """Firstsight: Playwright-driven search results harvester."""
     pass
 
 
