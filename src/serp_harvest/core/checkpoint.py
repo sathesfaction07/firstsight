@@ -24,7 +24,7 @@ class Checkpoint:
             return
 
         try:
-            with open(self.checkpoint_path, "r") as f:
+            with open(self.checkpoint_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 self.records = {k: set(v) for k, v in data.items()}
             total = sum(len(v) for v in self.records.values())
@@ -38,7 +38,7 @@ class Checkpoint:
         try:
             data = {k: list(v) for k, v in self.records.items()}
             temp_path = f"{self.checkpoint_path}.tmp"
-            with open(temp_path, "w") as f:
+            with open(temp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             os.replace(temp_path, self.checkpoint_path)
         except Exception as e:
